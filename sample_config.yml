@@ -1,0 +1,30 @@
+# Sample app-interface namespace configuration for a VPC Endpoint.
+#
+# Prerequisites:
+#   - A VPC Endpoint Service must already exist (provisioned by er-aws-vpc-endpoint-service).
+#     The endpoint_service_name is available in the output secret of that resource.
+#   - The consuming account's IAM terraform user ARN must be added to the endpoint service's
+#     allowed_consumer_clusters list.
+#
+# The module selects private subnets from the VPC reference automatically and handles
+# AZ alignment with the endpoint service (same-region only).
+#
+# Outputs are synced to a Kubernetes secret in the target namespace:
+#   endpoint_dns_name  — the DNS name to use for connecting to the service
+#   endpoint_id        — the VPC Endpoint ID
+#   endpoint_state     — the current state of the endpoint (e.g., available)
+
+managedExternalResources: true
+externalResources:
+- provider: aws
+  provisioner:
+    $ref: /aws/my-aws-account/account.yml
+  resources:
+  - provider: vpc-endpoint
+    identifier: myservice-endpoint
+    managed_by_erv2: true
+    endpoint_service_name: com.amazonaws.vpce.us-east-1.vpce-svc-0123456789abcdef0
+    vpc:
+      $ref: /aws/my-aws-account/vpc/my-vpc.yml
+
+    output_resource_name: myservice-endpoint   # name of the output Kubernetes secret

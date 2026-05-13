@@ -1,0 +1,103 @@
+[project]
+name = "er-aws-vpc-endpoint"
+version = "0.1.0"
+description = "ERv2 module for managing AWS VPC Endpoints (PrivateLink consumer side)"
+authors = [{ name = "AppSRE", email = "sd-app-sre@redhat.com" }]
+license = { text = "Apache 2.0" }
+readme = "README.md"
+requires-python = "~= 3.12.0"
+dependencies = [
+    "boto3==1.42.88",
+    "external-resources-io==0.6.4",
+    "pydantic==2.12.5",
+]
+
+[project.urls]
+homepage = "https://github.com/app-sre/er-aws-vpc-endpoint"
+repository = "https://github.com/app-sre/er-aws-vpc-endpoint"
+documentation = "https://github.com/app-sre/er-aws-vpc-endpoint"
+
+[dependency-groups]
+dev = [
+    "boto3-stubs[ec2]==1.42.88",
+    "external-resources-io[cli]==0.6.4",
+    "mypy==1.20.0",
+    "pytest-cov==7.1.0",
+    "pytest-mock==3.14.0",
+    "pytest==9.0.3",
+    "ruff==0.15.10",
+]
+
+[project.scripts]
+generate-tf-config = 'er_aws_vpc_endpoint.__main__:main'
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# Ruff configuration
+[tool.ruff]
+line-length = 88
+target-version = 'py312'
+src = ["er_aws_vpc_endpoint", "hooks", "hooks_lib"]
+fix = true
+
+[tool.ruff.lint]
+preview = true
+select = ["ALL"]
+ignore = [
+    "CPY",    # Missing copyright header
+    "D100",   # Missing docstring in public module
+    "D104",   # Missing docstring in public package
+    "D107",   # Missing docstring in __init__
+    "D203",   # 1 blank line required before class docstring
+    "D213",   # multi-line-summary-second-line
+    "D4",     # Doc string style
+    "E501",   # Line too long
+    "G004",   # Logging statement uses string formatting
+    "S101",   # Use of assert detected. Pytest uses assert
+    "EM101",
+    "EM102",
+    "TRY003",
+    # pydoclint
+    "DOC",
+    # May conflict with the formatter, https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+    "W191",
+    "E111",
+    "E114",
+    "E117",
+    "D206",
+    "D300",
+    "Q",
+    "COM812",
+    "COM819",
+    "ISC001",
+]
+[tool.ruff.format]
+preview = true
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*.py" = ["D"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["er_aws_vpc_endpoint", "hooks", "hooks_lib"]
+
+# Mypy configuration
+[tool.mypy]
+plugins = "pydantic.mypy"
+files = ["er_aws_vpc_endpoint", "hooks", "hooks_lib", "tests"]
+enable_error_code = ["truthy-bool", "redundant-expr"]
+no_implicit_optional = true
+check_untyped_defs = true
+warn_unused_ignores = true
+show_error_codes = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+
+# Coverage configuration
+[tool.coverage.run]
+branch = true
+omit = ["*/tests/*"]
+
+[tool.coverage.report]
+fail_under = 85
