@@ -12,7 +12,6 @@
 # Outputs are synced to a Kubernetes secret in the target namespace:
 #   endpoint_dns_name  — the DNS name to use for connecting to the service
 #   endpoint_id        — the VPC Endpoint ID
-#   endpoint_state     — the current state of the endpoint (e.g., available)
 
 managedExternalResources: true
 externalResources:
