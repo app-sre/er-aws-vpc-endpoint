@@ -13,7 +13,7 @@ image_tests:
 	[ -d "hooks_lib" ]
 
 	# sources must be copied
-	[ -d "module" ]
+	[ -d "$$TERRAFORM_MODULE_SRC_DIR" ]
 
 	# test the terraform providers are downloaded
 	[ -d "$$TF_PLUGIN_CACHE_DIR/registry.terraform.io/hashicorp/aws" ]
@@ -30,7 +30,7 @@ code_tests:
 
 .PHONY: terraform_tests
 terraform_tests:
-	terraform fmt -check -diff module/
+	terraform fmt -check -diff "$$TERRAFORM_MODULE_SRC_DIR"
 
 .PHONY: test
 test: code_tests terraform_tests
