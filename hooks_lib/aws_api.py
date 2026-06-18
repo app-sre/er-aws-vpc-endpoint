@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
 
     from mypy_boto3_ec2 import EC2Client
+    from mypy_boto3_ec2.literals import DnsNameStateType
 
 
 class AWSApi:
@@ -35,3 +36,23 @@ class AWSApi:
             if e.response["Error"]["Code"] in {"InvalidServiceName", "InvalidFilter"}:
                 return False
             raise
+
+    def get_private_dns_verification_state(
+        self, service_name: str
+    ) -> DnsNameStateType | None:
+        """Return the private DNS name verification state for the given service.
+
+        Returns None if the service is not found or has no private DNS name configured.
+        """
+        try:
+            response = self.ec2_client.describe_vpc_endpoint_services(
+                ServiceNames=[service_name]
+            )
+        except ClientError as e:
+            if e.response["Error"]["Code"] in {"InvalidServiceName", "InvalidFilter"}:
+                return None
+            raise
+        details = response.get("ServiceDetails", [])
+        if not details:
+            return None
+        return details[0].get("PrivateDnsNameVerificationState")

@@ -26,4 +26,9 @@ externalResources:
     vpc:
       $ref: /aws/my-aws-account/vpc/my-vpc.yml
 
+    # Optional: enable private DNS resolution for the endpoint's service name.
+    # Requires the endpoint service to have a verified private DNS name
+    # (see er-aws-vpc-endpoint-service). Defaults to false.
+    private_dns_enabled: false
+
     output_resource_name: myservice-endpoint   # name of the output Kubernetes secret

@@ -14,6 +14,7 @@ class VpcEndpointData(BaseModel):
     vpc_id: str
     subnet_ids: list[str] = Field(default_factory=list)
     endpoint_service_name: str
+    private_dns_enabled: bool = False
     tags: dict[str, Any] = Field(default_factory=dict)
     output_resource_name: str | None = None
 

@@ -1,6 +1,6 @@
 [project]
 name = "er-aws-vpc-endpoint"
-version = "0.2.0"
+version = "0.3.0"
 description = "ERv2 module for managing AWS VPC Endpoints (PrivateLink consumer side)"
 authors = [{ name = "AppSRE", email = "sd-app-sre@redhat.com" }]
 license = { text = "Apache 2.0" }
