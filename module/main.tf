@@ -55,7 +55,7 @@ resource "aws_vpc_endpoint" "this" {
   vpc_endpoint_type   = "Interface"
   subnet_ids          = local.supported_subnet_ids
   security_group_ids  = [aws_security_group.endpoint.id]
-  private_dns_enabled = false
+  private_dns_enabled = var.private_dns_enabled
   ip_address_type     = "ipv4"
   service_region      = local.service_region
   tags                = local.tags

@@ -19,7 +19,7 @@ Creates an interface VPC Endpoint connecting to a VPC Endpoint Service provision
 - **Only works with VPCES-created services** — designed for services provisioned by `er-aws-vpc-endpoint-service`, not AWS-managed endpoint services.
 - **Private subnets auto-selected** — subnets tagged `privacy: private` in the VPC reference are used automatically.
 - **AZ alignment handled automatically** — for same-region, subnets are filtered to those in AZs supported by the endpoint service. For cross-region, all subnets are used (no AZ restriction applies).
-- **`private_dns_enabled` is hardcoded to `false`** — consumers must use the `endpoint_dns_name` from the output secret.
+- **`private_dns_enabled` defaults to `false`** — opt-in. Requires the endpoint service to have a verified private DNS name (see [`er-aws-vpc-endpoint-service`](https://github.com/app-sre/er-aws-vpc-endpoint-service)). If unset, consumers use the `endpoint_dns_name` from the output secret.
 - **Security group allows all traffic** — the endpoint service's allowed principals list is the access control boundary.
 - **Pre-run hook fails the run** if the endpoint service is not found or not accessible from this account.
 
@@ -79,6 +79,6 @@ $ podman run --rm -it \
 ## Known Limitations
 
 - **VPCES-only** — this module only connects to services created by `er-aws-vpc-endpoint-service`. AWS-managed services (e.g., `com.amazonaws.us-east-1.s3`) are not supported.
-- **No private DNS** — `private_dns_enabled` is hardcoded to `false`. Applications must use the `endpoint_dns_name` output, not a service-specific DNS name.
+- **Private DNS is opt-in** — `private_dns_enabled` defaults to `false`. Enabling it before the endpoint service's private DNS name is verified does not fail `terraform apply`, but DNS resolution will not work until AWS completes verification.
 - **AZ alignment (same-region)** — the endpoint can only be placed in subnets whose AZ is supported by the endpoint service. If the provider's NLB does not cover the consumer's AZs, no subnets will be selected and Terraform will error. Resolve by verifying AZ ID overlap or asking the provider to extend the NLB to additional AZs.
 - **Physical AZ mapping** — AZ names (e.g., `us-east-1a`) map to different physical datacenters across AWS accounts in certain legacy regions. Use AZ IDs (e.g., `use1-az1`) to verify alignment: `aws ec2 describe-availability-zones --query 'AvailabilityZones[].{Name:ZoneName,Id:ZoneId}'`.

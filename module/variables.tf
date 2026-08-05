@@ -23,6 +23,11 @@ variable "tags" {
   type = map(any)
 }
 
+variable "private_dns_enabled" {
+  type    = bool
+  default = false
+}
+
 variable "vpc_id" {
   type = string
 }
