@@ -32,8 +32,17 @@ code_tests:
 terraform_tests:
 	terraform fmt -check -diff "$$TERRAFORM_MODULE_SRC_DIR"
 
+.PHONY: version_test
+version_test:
+	@pyproject_version="$$(grep -m1 '^version = ' pyproject.toml | cut -d'"' -f2)"; \
+	dockerfile_version="$$(grep -m1 'konflux.additional-tags' Dockerfile | cut -d'"' -f2)"; \
+	if [ "$$pyproject_version" != "$$dockerfile_version" ]; then \
+		echo "version mismatch: pyproject.toml version is '$$pyproject_version' but Dockerfile LABEL konflux.additional-tags is '$$dockerfile_version'. Keep them in sync."; \
+		exit 1; \
+	fi
+
 .PHONY: test
-test: code_tests terraform_tests
+test: code_tests terraform_tests version_test
 
 .PHONY: in_container_test
 in_container_test: image_tests test
