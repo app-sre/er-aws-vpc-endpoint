@@ -1,10 +1,10 @@
-FROM quay.io/redhat-services-prod/app-sre-tenant/er-base-terraform-main/er-base-terraform-main:0.6.0-1@sha256:f234d99c2970151dc445ecd0870bd320c3ccdb9a9e579f97a84779a640f2f1ee AS base
+FROM quay.io/redhat-services-prod/app-sre-tenant/er-base-terraform-main/er-base-terraform-main:0.6.0-11@sha256:497aa38497e9af1610948012e50d975baa1f99db3b1bba8989bb28b2df57c92c AS base
 # keep in sync with pyproject.toml
 LABEL konflux.additional-tags="0.2.0"
 ENV TERRAFORM_MODULE_SRC_DIR="./module"
 
 FROM base AS builder
-COPY --from=ghcr.io/astral-sh/uv:0.11.19@sha256:b46b03ddfcfbf8f547af7e9eaefdf8a39c8cebcba7c98858d3162bd28cf536f6 /uv /bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.12.1@sha256:cf4eedcaa81655197f625739489effcbe71b61ceb1506f332c3facae5deceded /uv /bin/uv
 
 COPY pyproject.toml uv.lock ./
 # Test lock file is up to date

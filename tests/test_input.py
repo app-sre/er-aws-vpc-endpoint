@@ -46,6 +46,17 @@ def test_default_tags(base_input: dict) -> None:
     assert ai_input.data.tags == {}
 
 
+def test_private_dns_enabled_default(base_input: dict) -> None:
+    ai_input = AppInterfaceInput.model_validate(base_input)
+    assert ai_input.data.private_dns_enabled is False
+
+
+def test_private_dns_enabled_set(base_input: dict) -> None:
+    base_input["data"]["private_dns_enabled"] = True
+    ai_input = AppInterfaceInput.model_validate(base_input)
+    assert ai_input.data.private_dns_enabled is True
+
+
 def test_missing_required_field(base_input: dict) -> None:
     del base_input["data"]["endpoint_service_name"]
     with pytest.raises(ValidationError):

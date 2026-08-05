@@ -105,3 +105,68 @@ def test_check_endpoint_service_exists_other_error_propagates(
     )
     with pytest.raises(ClientError):
         api.check_endpoint_service_exists("com.amazonaws.vpce.us-east-1.vpce-svc-0123")
+
+
+def test_get_private_dns_verification_state_verified(
+    aws_api_with_mock_client: tuple[AWSApi, MagicMock],
+) -> None:
+    api, mock_client = aws_api_with_mock_client
+    mock_client.describe_vpc_endpoint_services.return_value = {
+        "ServiceDetails": [{"PrivateDnsNameVerificationState": "verified"}]
+    }
+    result = api.get_private_dns_verification_state(
+        "com.amazonaws.vpce.us-east-1.vpce-svc-0123"
+    )
+    assert result == "verified"
+
+
+def test_get_private_dns_verification_state_pending(
+    aws_api_with_mock_client: tuple[AWSApi, MagicMock],
+) -> None:
+    api, mock_client = aws_api_with_mock_client
+    mock_client.describe_vpc_endpoint_services.return_value = {
+        "ServiceDetails": [{"PrivateDnsNameVerificationState": "pendingVerification"}]
+    }
+    result = api.get_private_dns_verification_state(
+        "com.amazonaws.vpce.us-east-1.vpce-svc-0123"
+    )
+    assert result == "pendingVerification"
+
+
+def test_get_private_dns_verification_state_empty(
+    aws_api_with_mock_client: tuple[AWSApi, MagicMock],
+) -> None:
+    api, mock_client = aws_api_with_mock_client
+    mock_client.describe_vpc_endpoint_services.return_value = {"ServiceDetails": []}
+    result = api.get_private_dns_verification_state(
+        "com.amazonaws.vpce.us-east-1.vpce-svc-0123"
+    )
+    assert result is None
+
+
+def test_get_private_dns_verification_state_invalid_service_name(
+    aws_api_with_mock_client: tuple[AWSApi, MagicMock],
+) -> None:
+    api, mock_client = aws_api_with_mock_client
+    mock_client.describe_vpc_endpoint_services.side_effect = ClientError(
+        {"Error": {"Code": "InvalidServiceName", "Message": "Not found"}},
+        "DescribeVpcEndpointServices",
+    )
+    result = api.get_private_dns_verification_state(
+        "com.amazonaws.vpce.us-east-1.vpce-svc-bad"
+    )
+    assert result is None
+
+
+def test_get_private_dns_verification_state_other_error_propagates(
+    aws_api_with_mock_client: tuple[AWSApi, MagicMock],
+) -> None:
+    api, mock_client = aws_api_with_mock_client
+    mock_client.describe_vpc_endpoint_services.side_effect = ClientError(
+        {"Error": {"Code": "UnauthorizedOperation", "Message": "Access denied"}},
+        "DescribeVpcEndpointServices",
+    )
+    with pytest.raises(ClientError):
+        api.get_private_dns_verification_state(
+            "com.amazonaws.vpce.us-east-1.vpce-svc-0123"
+        )
