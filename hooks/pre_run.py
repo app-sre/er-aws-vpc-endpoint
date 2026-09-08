@@ -38,6 +38,11 @@ class VpcEndpointPreRunValidator:
         # to correctly handle cross-region PrivateLink scenarios.
         region = service_region(service_name)
         self.aws_api = AWSApi(config_options={"region_name": region})
+        self.vpc_aws_api = self.aws_api
+        if self.input.data.region != region:
+            self.vpc_aws_api = AWSApi(
+                config_options={"region_name": self.input.data.region}
+            )
         self.errors: list[str] = []
         self.warnings: list[str] = []
 
@@ -51,14 +56,32 @@ class VpcEndpointPreRunValidator:
                 "been added to the service's allowed principals."
             )
         elif self.input.data.private_dns_enabled:
-            state = self.aws_api.get_private_dns_verification_state(service_name)
-            if state != VERIFIED_STATE:
-                self.warnings.append(
-                    f"private_dns_enabled is set but the endpoint service's private "
-                    f"DNS name verification state is '{state}', not '{VERIFIED_STATE}'. "
-                    "DNS resolution will not work until AWS completes verification."
-                )
+            self._validate_vpc_dns_attributes()
+            if not self.errors:
+                state = self.aws_api.get_private_dns_verification_state(service_name)
+                if state != VERIFIED_STATE:
+                    self.warnings.append(
+                        f"private_dns_enabled is set but the endpoint service's private "
+                        f"DNS name verification state is '{state}', not "
+                        f"'{VERIFIED_STATE}'. "
+                        "DNS resolution will not work until AWS completes verification."
+                    )
         return not self.errors
+
+    def _validate_vpc_dns_attributes(self) -> None:
+        """Require VPC DNS attributes when Private DNS is enabled."""
+        vpc_id = self.input.data.vpc_id
+        dns_support, dns_hostnames = self.vpc_aws_api.get_vpc_dns_attributes(vpc_id)
+        if not dns_support:
+            self.errors.append(
+                f"Consumer VPC '{vpc_id}' must have enableDnsSupport enabled "
+                "when private_dns_enabled is true."
+            )
+        if not dns_hostnames:
+            self.errors.append(
+                f"Consumer VPC '{vpc_id}' must have enableDnsHostnames enabled "
+                "when private_dns_enabled is true."
+            )
 
 
 if __name__ == "__main__":
