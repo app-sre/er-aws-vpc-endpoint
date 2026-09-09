@@ -1,5 +1,5 @@
 from collections.abc import Iterator
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 
@@ -71,6 +71,7 @@ def test_validate_private_dns_verified(
 ) -> None:
     ai_input.data.private_dns_enabled = True
     mock_aws_api.return_value.check_endpoint_service_exists.return_value = True
+    mock_aws_api.return_value.get_vpc_dns_attributes.return_value = (True, True)
     mock_aws_api.return_value.get_private_dns_verification_state.return_value = (
         "verified"
     )
@@ -85,6 +86,7 @@ def test_validate_private_dns_pending_warns(
 ) -> None:
     ai_input.data.private_dns_enabled = True
     mock_aws_api.return_value.check_endpoint_service_exists.return_value = True
+    mock_aws_api.return_value.get_vpc_dns_attributes.return_value = (True, True)
     mock_aws_api.return_value.get_private_dns_verification_state.return_value = (
         "pendingVerification"
     )
@@ -92,6 +94,61 @@ def test_validate_private_dns_pending_warns(
     assert validator.validate()
     assert len(validator.warnings) == 1
     assert "pendingVerification" in validator.warnings[0]
+
+
+def test_validate_private_dns_dns_support_disabled(
+    ai_input: AppInterfaceInput,
+    mock_aws_api: MagicMock,
+) -> None:
+    ai_input.data.private_dns_enabled = True
+    mock_aws_api.return_value.check_endpoint_service_exists.return_value = True
+    mock_aws_api.return_value.get_vpc_dns_attributes.return_value = (False, True)
+
+    validator = VpcEndpointPreRunValidator(ai_input)
+
+    assert not validator.validate()
+    assert len(validator.errors) == 1
+    assert "enableDnsSupport" in validator.errors[0]
+    mock_aws_api.return_value.get_private_dns_verification_state.assert_not_called()
+
+
+def test_validate_private_dns_dns_hostnames_disabled(
+    ai_input: AppInterfaceInput,
+    mock_aws_api: MagicMock,
+) -> None:
+    ai_input.data.private_dns_enabled = True
+    mock_aws_api.return_value.check_endpoint_service_exists.return_value = True
+    mock_aws_api.return_value.get_vpc_dns_attributes.return_value = (True, False)
+
+    validator = VpcEndpointPreRunValidator(ai_input)
+
+    assert not validator.validate()
+    assert len(validator.errors) == 1
+    assert "enableDnsHostnames" in validator.errors[0]
+    mock_aws_api.return_value.get_private_dns_verification_state.assert_not_called()
+
+
+def test_validator_uses_consumer_region_for_vpc_dns(
+    ai_input: AppInterfaceInput,
+    mock_aws_api: MagicMock,
+) -> None:
+    ai_input.data.private_dns_enabled = True
+    ai_input.data.region = "eu-west-1"
+    service_api = MagicMock()
+    consumer_api = MagicMock()
+    service_api.check_endpoint_service_exists.return_value = True
+    service_api.get_private_dns_verification_state.return_value = "verified"
+    consumer_api.get_vpc_dns_attributes.return_value = (True, True)
+    mock_aws_api.side_effect = [service_api, consumer_api]
+
+    validator = VpcEndpointPreRunValidator(ai_input)
+
+    assert validator.validate()
+    assert mock_aws_api.call_args_list == [
+        call(config_options={"region_name": "us-east-1"}),
+        call(config_options={"region_name": "eu-west-1"}),
+    ]
+    consumer_api.get_vpc_dns_attributes.assert_called_once_with("vpc-0123456789abcdef0")
 
 
 def test_validate_private_dns_not_checked_when_service_missing(

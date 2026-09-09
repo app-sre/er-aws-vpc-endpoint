@@ -37,6 +37,18 @@ class AWSApi:
                 return False
             raise
 
+    def get_vpc_dns_attributes(self, vpc_id: str) -> tuple[bool, bool]:
+        """Return whether DNS support and DNS hostnames are enabled for a VPC."""
+        dns_support = self.ec2_client.describe_vpc_attribute(
+            VpcId=vpc_id,
+            Attribute="enableDnsSupport",
+        )["EnableDnsSupport"]["Value"]
+        dns_hostnames = self.ec2_client.describe_vpc_attribute(
+            VpcId=vpc_id,
+            Attribute="enableDnsHostnames",
+        )["EnableDnsHostnames"]["Value"]
+        return dns_support, dns_hostnames
+
     def get_private_dns_verification_state(
         self, service_name: str
     ) -> DnsNameStateType | None:

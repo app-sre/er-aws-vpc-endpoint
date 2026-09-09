@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, call
 
 import pytest
 from botocore.exceptions import ClientError
@@ -79,6 +79,38 @@ def test_check_endpoint_service_exists_empty(
         "com.amazonaws.vpce.us-east-1.vpce-svc-0123"
     )
     assert result is False
+
+
+def test_get_vpc_dns_attributes_enabled(
+    aws_api_with_mock_client: tuple[AWSApi, MagicMock],
+) -> None:
+    api, mock_client = aws_api_with_mock_client
+    mock_client.describe_vpc_attribute.side_effect = [
+        {"EnableDnsSupport": {"Value": True}},
+        {"EnableDnsHostnames": {"Value": True}},
+    ]
+
+    result = api.get_vpc_dns_attributes("vpc-0123")
+
+    assert result == (True, True)
+    assert mock_client.describe_vpc_attribute.call_args_list == [
+        call(VpcId="vpc-0123", Attribute="enableDnsSupport"),
+        call(VpcId="vpc-0123", Attribute="enableDnsHostnames"),
+    ]
+
+
+def test_get_vpc_dns_attributes_disabled(
+    aws_api_with_mock_client: tuple[AWSApi, MagicMock],
+) -> None:
+    api, mock_client = aws_api_with_mock_client
+    mock_client.describe_vpc_attribute.side_effect = [
+        {"EnableDnsSupport": {"Value": False}},
+        {"EnableDnsHostnames": {"Value": True}},
+    ]
+
+    result = api.get_vpc_dns_attributes("vpc-0123")
+
+    assert result == (False, True)
 
 
 def test_check_endpoint_service_exists_invalid_service_name(
